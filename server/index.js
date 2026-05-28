@@ -1,15 +1,30 @@
 const express = require('express')
 const cors = require('cors')
+const mongoose = require('mongoose')
+require('dotenv').config()
+
+const authRoutes = require('./routes/auth')
 
 const app = express()
 app.use(cors())
 app.use(express.json())
 
-app.get('/', (req,res) => {
-    res.json({message: 'CodeSync server is running' })
+// Routes
+app.use('/api/auth', authRoutes)
+
+app.get('/', (req, res) => {
+  res.json({ message: 'CodeSync server running' })
 })
 
-const port = 5000
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}` )
-})
+// Connect MongoDB then start server
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log('MongoDB connected')
+    app.listen(process.env.PORT, () => {
+      console.log(`Server on http://localhost:${process.env.PORT}`)
+    })
+  })
+  .catch((err) => {
+    console.error('MongoDB connection failed:', err.message)
+  })
