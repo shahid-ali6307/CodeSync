@@ -1,36 +1,28 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from 'uuid';
+import { useAuth } from "../context/AuthContext";
 
 function Home() {
     const navigate = useNavigate()
     const [roomId, setRoomId] = useState('')
-    const [username, setUsername] = useState('')
+    const { user, logout } = useAuth()
     const [error, setError] = useState('')
 
     function createRoom() {
-        if(!username.trim()) {
-            setError('Please enter a username first')
-            return
-        }
-
         const newRoomId = uuidv4()
-        navigate(`/editor/${newRoomId}`,{
-            state: {username}
-        })
-    }
+        navigate(`/editor/${newRoomId}`, {
+            state: {username: user.username }
+    })
+}
 
     function joinRoom() {
-        if(!username.trim()) {
-            setError('Please enter username')
-            return
-        }
         if(!roomId.trim()) {
             setError('Please enter a room ID')
             return
         }
         navigate(`/editor/${roomId}`,{
-            state: {username}
+            state: {username: user.username}
         })
     }
 
@@ -58,16 +50,6 @@ function Home() {
                     <div styles= {styles.error}>{error}</div>
                 )}
 
-                {/* Username */}
-                <input type="text"
-                       style={styles.input}
-                       placeholder="Your Username"
-                       value={username}
-                       onChange={(e) => {
-                        setUsername(e.target.value)
-                        setError('')
-                       }}
-                />
 
                 {/* Room ID input for joining */}
                 <input type="text"
