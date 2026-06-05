@@ -3,11 +3,13 @@ import Editor from "../components/Editor/Editor";
 import LanguagesSelector from "../components/LanguageSelector/LanguageSelector";
 import { DEFAULT_CODE } from "../utils/constants";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function EditorPage() {
     const { roomId } = useParams()
     const location = useLocation()
     const navigate = useNavigate()
+    const { logout } = useAuth()
 
     const username = location.state?.username
     if(!username){
@@ -25,6 +27,11 @@ function EditorPage() {
 
     function handleCodeChange(newCode){
         setCode(newCode)
+    }
+
+    function handleLogout(){
+        logout()
+        setTimeout(() => navigate('/auth'), 100)
     }
 
     return (
@@ -49,10 +56,22 @@ function EditorPage() {
                 Room: {roomId.slice(0, 8)}...  |  👤 {username}
             </span>
 
-            <LanguagesSelector 
+            <div style={{ display: 'flex' ,flexDirection: 'row',padding: '10px',gap: '15px', margin: '10px'}}>
+                <LanguagesSelector 
                language={language}
                onLanguageChange={handleLanguageChange}
             />
+            <button type="logout" onClick={handleLogout} style={{ background: '#0e7a5f',
+        color: '#fff',
+        border: 'none',
+        borderRadius: '8px',
+        padding: '13px',
+        fontSize: '14px',
+        fontWeight: '600',
+        cursor: 'pointer'}}>
+                Logout
+            </button>
+            </div>
         </div>
 
 
