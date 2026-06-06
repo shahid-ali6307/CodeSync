@@ -2,7 +2,7 @@ const express = require('express')
 const cors = require('cors')
 const mongoose = require('mongoose')
 const http = require('http')
-const { server } = require('socket.io')
+const { Server } = require('socket.io')
 require('dotenv').config()
 
 const authRoutes = require('./routes/auth')
@@ -39,7 +39,7 @@ io.on('connection', (socket) => {
   console.log('Socket connected:', socket.id)
 
   // user joins a room _______________________
-  socket.on('join room', ({ roomId,username }) => {
+  socket.on('join_room', ({ roomId,username }) => {
     socket.join(roomId)
 
   // Add user to room tracking................
@@ -49,10 +49,10 @@ io.on('connection', (socket) => {
   console.log(`${username} joined room ${roomId}`)
 
   // tell everyone in the room the updated user list
-  io.to(roomId).emit('user_joined', rooms[roomId] )
+  io.to(roomId).emit('room_users', rooms[roomId] )
 
   //tell others someone joined
-  socket.tp(roomId).emit('user_joined', { username })
+  socket.to(roomId).emit('user_joined', { username })
   })
 
   // User disconnects--------------
@@ -84,7 +84,6 @@ io.on('connection', (socket) => {
 socket.on('disconnect', () => {
   console.log('Socket disconnected:', socket.id)
   })
-  
 })
 
 
@@ -94,7 +93,7 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
     console.log('MongoDB connected')
-    app.listen(process.env.PORT, () => {
+    server.listen(process.env.PORT, () => {
       console.log(`Server on http://localhost:${process.env.PORT}`)
     })
   })
