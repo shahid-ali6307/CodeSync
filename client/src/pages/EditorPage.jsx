@@ -6,7 +6,7 @@ import UserSidebar from "../components/UserSidebar/UserSidebar";
 import Toast from "../components/Toast/Toast";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import socket from "../utils/socket"
+import useSocket from "../hooks/useSocket"
 
 function EditorPage() {
     const { roomId } = useParams()
@@ -22,48 +22,50 @@ function EditorPage() {
     // Get username — from auth context (preferred) or location state
     const username = user?.username || location.state?.username
 
-    useEffect(() => {
-        if(!username) {
-            navigate('/')
-            return
-        }
+    //Callbacks for socket events
+    const handleCodeUpdate = useCallback((newCode) => {
+      setCode(newCode)
+    }, [])
 
-        //connect socket and join room
-    socket.connect()
-    socket.emit('join_room', {roomId, username})
+    const handleLanguageUpdate = useCallback((newLanguage) => {
+      setLanguage(newLanguage)
+      setCode(DEFAULT_CODE[newLanguage])
+    }, [])
 
-    //Listen for updated users list
-    socket.on('room_users', (roomUsers) => {
-        setUsers(roomUsers)
+    const handleUsersUpdate = useCallback((users) => {
+      setUsers(users)
+    }, [])
+    
+    const handleUserJoined = useCallback((username) => {
+      setToast(`${username} joined the room`)
+    }, [])
+
+    const handleUserLeft = useCallback((username) => {
+      setToast(`${username} left the room`)
+    }, [])
+
+    //Custom hookhandles all socket logic
+
+    const { emitCodeChange, emitLanguageChange, isRemoteChange} = useSocket({
+      roomId,
+      username,
+      onCodeUpdate: handleCodeUpdate,
+      onLanguageChange: handleLanguageUpdate,
+      onUserUpdate: handleUsersUpdate,
+      onUserJoined: handleUserJoined,
+      onUserLeft: handleUserLeft,
     })
-
-    // Someone joined
-    socket.on('user_joined', ({ username: joinedUser }) => {
-        setToast(`${joinedUser} joined the room`)
-    })
-
-    // Someone left 
-    socket.on('user_left', ({ username: leftUser}) => {
-        setToast(`${leftUser} left the room`)
-    })
-
-    // Cleanup onunmount
-    return () => {
-        socket.off('room_users')
-        socket.off('user_joined')
-        socket.off('user_left')
-        socket.disconnect()
-    }
-    }, [roomId, username, navigate] )
 
 
     function handleLanguageChange(newLang){
         setLanguage(newLang)
         setCode(DEFAULT_CODE[newLang])
+        emitLanguageChange(roomId, newLang) //instant emit
     }
 
     function handleCodeChange(newCode){
         setCode(newCode)
+        emitCodeChange(roomId, newCode) //debounced emit
     }
 
     function handleLogout(){
@@ -77,6 +79,11 @@ function EditorPage() {
   }
 
   const closeToast = useCallback(() => setToast(''), [])
+
+  if(!username) {
+    navigate('/')
+    return null
+  }
 
     return (
         <div style={styles.page}>
@@ -115,7 +122,8 @@ function EditorPage() {
                    <Editor
                      language={language}
                      code={code}
-                     onChange={setCode}
+                     onChange={handleCodeChange}
+                     isRemoteChange={isRemoteChange}
                    />
                   </div>
 

@@ -55,6 +55,17 @@ io.on('connection', (socket) => {
   socket.to(roomId).emit('user_joined', { username })
   })
 
+   //user changed code.............
+  socket.on('code_change', ({ roomId, code }) => {
+    //Boradcast everyone in the room except the sender
+    socket.to(roomId).emit('code_change', { code })
+  })
+
+  //user changed language................
+  socket.on('language_change', ({ roomId, language }) => {
+    socket.to(roomId).emit('language_change', { language })
+  })
+
   // User disconnects--------------
   socket.on('disconnecting', () => {
   // socket.rooms has all the rooms this socket is in
