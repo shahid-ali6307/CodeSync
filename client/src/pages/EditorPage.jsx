@@ -7,17 +7,21 @@ import Toast from "../components/Toast/Toast";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import useSocket from "../hooks/useSocket"
+import OutputPanel from "../components/OutputPanel/OutputPanel"
+import { runCode } from '../utils/api'
 
 function EditorPage() {
     const { roomId } = useParams()
     const location = useLocation()
     const navigate = useNavigate()
-    const { user, logout } = useAuth()
+    const { user,token, logout } = useAuth()
 
     const [language, setLanguage]= useState('javascript')
     const [code, setCode]= useState(DEFAULT_CODE['javascript'])
     const [users, setUsers] = useState([])
     const [toast, setToast] = useState('')
+    const [output,setOutput] = useState(null)
+    const [isRunning, setIsRunning] =useState(false)
 
     // Get username — from auth context (preferred) or location state
     const username = user?.username || location.state?.username
@@ -56,7 +60,7 @@ function EditorPage() {
       onUserLeft: handleUserLeft,
     })
 
-
+      //Handlers-----------------------------
     function handleLanguageChange(newLang){
         setLanguage(newLang)
         setCode(DEFAULT_CODE[newLang])
@@ -66,6 +70,26 @@ function EditorPage() {
     function handleCodeChange(newCode){
         setCode(newCode)
         emitCodeChange(roomId, newCode) //debounced emit
+    }
+
+    async function handleRun() {
+      if(isRunning) return
+      setIsRunning(true)
+      setOutput(null)
+
+      try {
+        const result = await runCode(code, language, token)
+        if(result.message) {
+          setOutput({ error: result.message})
+        } else {
+          setOutput(result)
+        }
+
+      } catch (err) {
+        setOutput({ error: 'Failed to reach the execution server' })
+      }
+
+      setIsRunning(false)
     }
 
     function handleLogout(){
@@ -84,6 +108,9 @@ function EditorPage() {
     navigate('/')
     return null
   }
+
+  // Render----------------------
+
 
     return (
         <div style={styles.page}>
@@ -108,6 +135,18 @@ function EditorPage() {
             language={language}
             onLanguageChange={handleLanguageChange}
           />
+
+          <button style={{ ...styles.runBtn,
+             opacity: isRunning?0.6: 1,
+             cursor: isRunning?'not-allowed':'pointer',
+             }}
+             onClick={handleRun}
+             disabled={isRunning}
+             >
+
+              {isRunning ? '⏳ Running...' : '▶ Run' }
+
+          </button>
           <button style={styles.logoutBtn} onClick={handleLogout}>
             Logout
           </button>
@@ -117,14 +156,22 @@ function EditorPage() {
 
                  {/* Main Area */}
                  <div style={styles.main}>
-                    {/* Editor */}
+                    {/* Editor + output atcked */}
                    <div style={styles.editorArea}>
-                   <Editor
+                    <div style={styles.editorStack}>
+                      <div style={{ flex: 1, overflow: 'hidden' }}>
+                      <Editor
                      language={language}
                      code={code}
                      onChange={handleCodeChange}
                      isRemoteChange={isRemoteChange}
                    />
+                    </div>
+
+                    {/*Output panel here */}
+                     <OutputPanel output={output} isRunning={isRunning} />
+                    </div>
+                    
                   </div>
 
                   {/* Users sidebar */}
@@ -189,6 +236,15 @@ const styles = {
     alignItems: 'center',
     gap: '12px',
   },
+  runBtn: {
+    background: '#0e7a5f',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '6px',
+    padding: '6px 16px',
+    fontSize: '13px',
+    fontWeight: '600',
+  },
   logoutBtn: {
     background: 'transparent',
     border: '1px solid #3c3c3c',
@@ -206,6 +262,11 @@ const styles = {
   editorArea: {
     flex: 1,
     overflow: 'hidden',
+  },
+  editorStack: {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
   },
 }
 

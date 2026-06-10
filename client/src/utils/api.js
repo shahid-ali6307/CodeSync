@@ -17,3 +17,15 @@ export async function loginUser(email, password) {
     })
     return res.json()
 }
+
+export async function runCode(code, language, token) {
+    const res = await fetch(`${BASE_URL}/execute/run`, {
+    method: 'POST',
+    headers: {
+         'Content-Type' : 'application/json',
+         'Authorization': `Bearer ${token}`,        
+    },
+    body: JSON.stringify({ code, language})
+    })
+    return res.json()
+}

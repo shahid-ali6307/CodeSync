@@ -9,6 +9,7 @@ const authRoutes = require('./routes/auth')
 
 const app = express()
 const server = http.createServer(app) //wrap express in http server
+const executeRoutes = require('./routes/execute')
 
 
 //socket io attaches to the http server , not express...
@@ -26,10 +27,16 @@ app.use(express.json())
 
 // Routes
 app.use('/api/auth', authRoutes)
+app.use('/api/execute', executeRoutes)
+
 
 app.get('/', (req, res) => {
   res.json({ message: 'CodeSync server running' })
 })
+
+
+
+
 
 //Socket.io  logic ------------------------------
 

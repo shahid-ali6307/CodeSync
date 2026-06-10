@@ -70,7 +70,7 @@ async function login(req, res) {
         // FInd user
         const user = await User.findOne({ email })
         if(!user) {
-            return res.staus(400).json({ message: 'Invalid credentials'})
+            return res.status(400).json({ message: 'Invalid credentials'})
         }
 
         // Compare password

@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken')
 
 function protect(req, res, next) {
   const authHeader = req.headers.authorization
+  console.log('Auth header received:', authHeader) 
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ message: 'No token, unauthorized' })
@@ -14,6 +15,7 @@ function protect(req, res, next) {
     req.user = decoded  // { id: userId }
     next()
   } catch (err) {
+    console.log('Token verify error:', err.message)
     res.status(401).json({ message: 'Token invalid or expired' })
   }
 }
