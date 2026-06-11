@@ -73,6 +73,14 @@ io.on('connection', (socket) => {
     socket.to(roomId).emit('language_change', { language })
   })
 
+  socket.on('chat_message', ({ roomId, message, username }) => {
+    io.to(roomId).emit('chat_message' , {
+      username,
+      message,
+      timestamp: new Date().toISOString(),
+    })
+  })
+
   // User disconnects--------------
   socket.on('disconnecting', () => {
   // socket.rooms has all the rooms this socket is in

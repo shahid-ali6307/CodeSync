@@ -33,14 +33,13 @@ function getColor(username) {
 
 const styles = {
     sidebar: {
-    width: '200px',
     background: '#252526',
     borderLeft: '1px solid #3c3c3c',
-    padding: '16px 12px',
+    padding: '12px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '10px',
-    overflowY: 'auto',
+    gap: '8px',
+    flexShrink: 0,
   },
 
   title: {

@@ -1,4 +1,5 @@
-import MonacoEditor from "@monaco-editor/react";
+import MonacoEditor from "@monaco-editor/react"
+
 import { useRef } from "react"
 
 

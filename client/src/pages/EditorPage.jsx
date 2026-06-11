@@ -9,6 +9,7 @@ import { useAuth } from "../context/AuthContext";
 import useSocket from "../hooks/useSocket"
 import OutputPanel from "../components/OutputPanel/OutputPanel"
 import { runCode } from '../utils/api'
+import ChatPanel from "../components/ChatPanel/ChatPanel"
 
 function EditorPage() {
     const { roomId } = useParams()
@@ -22,6 +23,7 @@ function EditorPage() {
     const [toast, setToast] = useState('')
     const [output,setOutput] = useState(null)
     const [isRunning, setIsRunning] =useState(false)
+    const [messages, setMessages] = useState([])
 
     // Get username — from auth context (preferred) or location state
     const username = user?.username || location.state?.username
@@ -48,9 +50,13 @@ function EditorPage() {
       setToast(`${username} left the room`)
     }, [])
 
+    const handleChatMessage = useCallback((messageData) => {
+      setMessages((prev) => [...prev, messageData])
+    }, [])
+
     //Custom hookhandles all socket logic
 
-    const { emitCodeChange, emitLanguageChange, isRemoteChange} = useSocket({
+    const { emitCodeChange, emitLanguageChange, emitChatMessage, isRemoteChange } = useSocket({
       roomId,
       username,
       onCodeUpdate: handleCodeUpdate,
@@ -58,6 +64,7 @@ function EditorPage() {
       onUserUpdate: handleUsersUpdate,
       onUserJoined: handleUserJoined,
       onUserLeft: handleUserLeft,
+      onChatMessage: handleChatMessage,
     })
 
       //Handlers-----------------------------
@@ -90,6 +97,9 @@ function EditorPage() {
       }
 
       setIsRunning(false)
+    }
+    function handleSendMessage(message) {
+      emitChatMessage(roomId, message, username)
     }
 
     function handleLogout(){
@@ -174,9 +184,16 @@ function EditorPage() {
                     
                   </div>
 
-                  {/* Users sidebar */}
-                <UserSidebar users={users} currentUser={username} />
-      </div>
+                  {/* Right column — users on top, chat below */}
+                  <div style={styles.rightColumn}>
+                     <UserSidebar users={users} currentUser={username} />
+                     <ChatPanel
+                         messages={messages}
+                         currentUser={username}
+                         onSendMessage={handleSendMessage}
+                     />
+                  </div>
+            </div>
 
       {/* Toast */}
       {toast && <Toast message={toast} onClose={closeToast} />}
@@ -231,6 +248,14 @@ const styles = {
     fontSize: '11px',
     cursor: 'pointer',
   },
+  rightColumn: {
+  width: '260px',
+  display: 'flex',
+  flexDirection: 'column',
+  borderLeft: '1px solid #3c3c3c',
+  flexShrink: 0,
+  overflow: 'hidden',
+},
   navRight: {
     display: 'flex',
     alignItems: 'center',

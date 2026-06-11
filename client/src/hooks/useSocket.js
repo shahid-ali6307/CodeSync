@@ -2,7 +2,7 @@ import { useEffect, useCallback, useRef } from "react";
 import { debounce } from 'lodash'
 import socket from "../utils/socket";
 
-function useSocket ({ roomId, username, onCodeUpdate, onLanguageChange, onUserUpdate, onUserJoined, onUserLeft }) {
+function useSocket ({ roomId, username, onCodeUpdate, onLanguageChange, onUserUpdate, onUserJoined, onUserLeft, onChatMessage }) {
     //Traack if current code change come from remote (not local tpying )
     const isRemoteChange = useRef(false)
 
@@ -33,13 +33,19 @@ function useSocket ({ roomId, username, onCodeUpdate, onLanguageChange, onUserUp
             onLanguageChange(language)
         })
 
+        socket.on('chat_message', (messageData) => {
+            onChatMessage(messageData)
+        })
+
         return () => {
         socket.off('room_users')
         socket.off('user_joined')
         socket.off('user_left')
         socket.off('code_change')
         socket.off('language_change')
+        socket.off('chat_message')
         socket.disconnect()
+        
         }
     }, [roomId, username])
     
@@ -55,7 +61,11 @@ function useSocket ({ roomId, username, onCodeUpdate, onLanguageChange, onUserUp
         socket.emit('language_change', { roomId, language })
     }
 
-    return { emitCodeChange, emitLanguageChange, isRemoteChange }
+    function emitChatMessage(roomId, message, username) {
+        socket.emit('chat_message', {roomId, message, username })
+    }
+
+    return { emitCodeChange, emitLanguageChange,emitChatMessage, isRemoteChange }
 }
 
 export default useSocket
