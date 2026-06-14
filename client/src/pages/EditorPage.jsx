@@ -24,6 +24,7 @@ function EditorPage() {
     const [output,setOutput] = useState(null)
     const [isRunning, setIsRunning] =useState(false)
     const [messages, setMessages] = useState([])
+    const [isLoading, setIsLoading] = useState(true)
 
     // Get username — from auth context (preferred) or location state
     const username = user?.username || location.state?.username
@@ -54,6 +55,24 @@ function EditorPage() {
       setMessages((prev) => [...prev, messageData])
     }, [])
 
+    const handleRoomState = useCallback(({ code, language }) => {
+      if(code) {
+        setCode(code)
+        isRemoteChange.current = true
+      }
+
+      if(language) {
+        setLanguage(language)
+      }
+      setIsLoading(false)
+    }, [])
+
+    // Fallback — if no room_state comes within 1 second, stop loading anyway
+    useEffect(() => {
+         const timer = setTimeout(() => setIsLoading(false), 1000)
+         return () => clearTimeout(timer)
+      }, [])
+
     //Custom hookhandles all socket logic
 
     const { emitCodeChange, emitLanguageChange, emitChatMessage, isRemoteChange } = useSocket({
@@ -65,6 +84,7 @@ function EditorPage() {
       onUserJoined: handleUserJoined,
       onUserLeft: handleUserLeft,
       onChatMessage: handleChatMessage,
+      onRoomState: handleRoomState,
     })
 
       //Handlers-----------------------------
@@ -120,6 +140,17 @@ function EditorPage() {
   }
 
   // Render----------------------
+  if (isLoading) {
+  return (
+    <div style={styles.loadingPage}>
+      <div style={styles.loadingCard}>
+        <div style={styles.spinner} />
+        <p style={styles.loadingText}>Joining room...</p>
+        <p style={styles.loadingSubtext}>Setting up your editor</p>
+      </div>
+    </div>
+  )
+}
 
 
     return (
@@ -293,6 +324,38 @@ const styles = {
     flexDirection: 'column',
     height: '100%',
   },
+  loadingPage: {
+  height: '100vh',
+  background: '#1e1e1e',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+loadingCard: {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: '16px',
+},
+spinner: {
+  width: '36px',
+  height: '36px',
+  border: '3px solid #3c3c3c',
+  borderTop: '3px solid #4ec9b0',
+  borderRadius: '50%',
+  animation: 'spin 0.8s linear infinite',
+},
+loadingText: {
+  color: '#cccccc',
+  fontSize: '16px',
+  fontWeight: '600',
+  margin: 0,
+},
+loadingSubtext: {
+  color: '#666',
+  fontSize: '13px',
+  margin: 0,
+},
 }
 
 export default EditorPage

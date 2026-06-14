@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# in root .gitignore
+client/.env
+server/.env
+node_modules

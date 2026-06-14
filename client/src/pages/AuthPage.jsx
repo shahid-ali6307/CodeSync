@@ -28,12 +28,10 @@ function AuthPage() {
             } else {
                 data = await signupUser(form.username, form.email, form.password)
             }
-
-            console.log('SERVER RESPONSE:', data) 
-
+            
             if(data.token) {
                 login(data.user, data.token)
-                setTimeout(() => navigate('/'), 100)
+                setTimeout(() => navigate('/'), { replace: true })
             } else {
                 setError(data.message || 'Something went wrong')
             }

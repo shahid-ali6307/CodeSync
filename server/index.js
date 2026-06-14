@@ -10,6 +10,8 @@ const authRoutes = require('./routes/auth')
 const app = express()
 const server = http.createServer(app) //wrap express in http server
 const executeRoutes = require('./routes/execute')
+const { connectRedis, saveRoomCode, getRoomCode } = require('./utils/redisClient')
+
 
 
 //socket io attaches to the http server , not express...
@@ -46,34 +48,56 @@ io.on('connection', (socket) => {
   console.log('Socket connected:', socket.id)
 
   // user joins a room _______________________
-  socket.on('join_room', ({ roomId,username }) => {
+  socket.on('join_room', async ({ roomId,username }) => {
     socket.join(roomId)
 
   // Add user to room tracking................
   if(!rooms[roomId]) rooms[roomId] = []
   rooms[roomId].push({ socketId: socket.id, username })
 
-  console.log(`${username} joined room ${roomId}`)
-
   // tell everyone in the room the updated user list
   io.to(roomId).emit('room_users', rooms[roomId] )
 
   //tell others someone joined
   socket.to(roomId).emit('user_joined', { username })
+
+  //Send existing room state to the NEW user only
+  const savedState = await getRoomCode(roomId)
+  if(savedState) {
+    socket.emit('room_state', {
+      code: savedState.code,
+      language: savedState.language,
+    })
+  }
   })
 
+
    //user changed code.............
-  socket.on('code_change', ({ roomId, code }) => {
+  socket.on('code_change',async ({ roomId, code }) => {
     //Boradcast everyone in the room except the sender
     socket.to(roomId).emit('code_change', { code })
+
+    //Persist latest code to redis 
+    await saveRoomCode(roomId, code, null)
+
   })
 
   //user changed language................
-  socket.on('language_change', ({ roomId, language }) => {
+  socket.on('language_change', async ({ roomId, language }) => {
     socket.to(roomId).emit('language_change', { language })
+
+    //Persist language - get existing code first to not overwrite...
+    const existing = await getRoomCode(roomId)
+    const code = existing?.code || ''
+    await saveRoomCode(roomId, code, language)
   })
 
   socket.on('chat_message', ({ roomId, message, username }) => {
+
+    if (!message || typeof message !== 'string') return
+    if (message.trim().length === 0) return
+    if (message.length > 500) return
+
     io.to(roomId).emit('chat_message' , {
       username,
       message,
@@ -117,8 +141,9 @@ socket.on('disconnect', () => {
 // Connect MongoDB then start server
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => {
+  .then(async () => {
     console.log('MongoDB connected')
+    await connectRedis()
     server.listen(process.env.PORT, () => {
       console.log(`Server on http://localhost:${process.env.PORT}`)
     })
