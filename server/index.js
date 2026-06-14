@@ -12,19 +12,29 @@ const server = http.createServer(app) //wrap express in http server
 const executeRoutes = require('./routes/execute')
 const { connectRedis, saveRoomCode, getRoomCode } = require('./utils/redisClient')
 
+const allowedOrigins = [
+  'http://localhost:5173',
+  process.env.CLIENT_URL,
+].filter(Boolean)
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+}))
+
 
 
 //socket io attaches to the http server , not express...
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:5173',
+    origin: allowedOrigins,
     methods: ['GET', 'POST']
   },
 })
-app.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true,
-}))
+// app.use(cors({
+//   origin: 'http://localhost:5173',
+//   credentials: true,
+// }))
 app.use(express.json())
 
 // Routes
