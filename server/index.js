@@ -14,13 +14,25 @@ const { connectRedis, saveRoomCode, getRoomCode } = require('./utils/redisClient
 
 const allowedOrigins = [
   'http://localhost:5173',
+  'https://code-sync-five-psi.vercel.app',
   process.env.CLIENT_URL,
 ].filter(Boolean)
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: function(origin, callback) {
+    // Allow requests with no origin (Postman, mobile apps)
+    if (!origin) return callback(null, true)
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true)
+    }
+    return callback(new Error('CORS blocked: ' + origin))
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }))
+
+app.options('*', cors())
 
 
 
@@ -28,7 +40,8 @@ app.use(cors({
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
-    methods: ['GET', 'POST']
+    methods: ['GET', 'POST'],
+    credentials: true,
   },
 })
 // app.use(cors({
