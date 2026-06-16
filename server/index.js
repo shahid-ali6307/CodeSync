@@ -32,8 +32,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }))
 
-app.options('/(.*)', cors())
-
 
 
 //socket io attaches to the http server , not express...
