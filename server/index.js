@@ -99,8 +99,9 @@ io.on('connection', (socket) => {
     socket.to(roomId).emit('code_change', { code })
 
     //Persist latest code to redis 
-    await saveRoomCode(roomId, code, null)
-
+    const existing = await getRoomCode(roomId)
+    const language = existing?.language || 'javascript'
+    await saveRoomCode(roomId, code, language)
   })
 
   //user changed language................
