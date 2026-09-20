@@ -2,7 +2,7 @@ export const LANGUAGES = [
     { label: "JavaScript", value: "javascript" },
     { label: "Python", value: "python" },
     { label: "c++", value: "cpp" },
-    { label: "Java", value: "jva" },
+    { label: "Java", value: "java" },
     { label: "Typescript", value: "typescript" },
 ]
 
