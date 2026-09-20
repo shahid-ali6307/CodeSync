@@ -12,37 +12,55 @@ const server = http.createServer(app) //wrap express in http server
 const executeRoutes = require('./routes/execute')
 const { connectRedis, saveRoomCode, getRoomCode } = require('./utils/redisClient')
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://code-sync-five-psi.vercel.app',
-  process.env.CLIENT_URL,
-].filter(Boolean)
+function isAllowedOrigin(origin) {
+  if (!origin) return true
+  if (origin === 'http://localhost:5173') return true
+  if (origin.endsWith('.vercel.app')) return true
+  if (origin === process.env.CLIENT_URL) return true
+  return false
+}
+
+// app.use(cors({
+//   origin: function(origin, callback) {
+//     // Allow requests with no origin (Postman, mobile apps)
+//     if (!origin) return callback(null, true)
+//     if (allowedOrigins.includes(origin)) {
+//       return callback(null, true)
+//     }
+//     return callback(new Error('CORS blocked: ' + origin))
+//   },
+//   credentials: true,
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+// }))
+
 
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (Postman, mobile apps)
-    if (!origin) return callback(null, true)
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true)
+    if (isAllowedOrigin(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error(`CORS blocked: ${origin}`))
     }
-    return callback(new Error('CORS blocked: ' + origin))
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
 }))
 
 
 
+
+
 //socket io attaches to the http server , not express...
-const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ['GET', 'POST'],
-    credentials: true,
+app.use(cors({
+  origin: function(origin, callback) {
+    if (isAllowedOrigin(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error(`CORS blocked: ${origin}`))
+    }
   },
-  transports: ['websocket', 'polling'],
-})
+  credentials: true,
+}))
 // app.use(cors({
 //   origin: 'http://localhost:5173',
 //   credentials: true,
