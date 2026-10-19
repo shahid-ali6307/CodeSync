@@ -24,12 +24,12 @@ function useSocket ({ roomId, username, onCodeUpdate, onLanguageChange, onUserUp
             onUserLeft(u)
         })
 
-        socket.on('code_change', ({ code }) =>{
+        socket.on('code_update', ({ code }) =>{
             isRemoteChange.current = true
             onCodeUpdate(code)
         })
 
-        socket.on('language_change', ({ language }) =>{
+        socket.on('language_update', ({ language }) =>{
             onLanguageChange(language)
         })
 
@@ -45,8 +45,8 @@ function useSocket ({ roomId, username, onCodeUpdate, onLanguageChange, onUserUp
         socket.off('room_users')
         socket.off('user_joined')
         socket.off('user_left')
-        socket.off('code_change')
-        socket.off('language_change')
+        socket.off('code_update')
+        socket.off('language_update')
         socket.off('chat_message')
         socket.off('room_state')
         socket.disconnect()
